@@ -27,8 +27,9 @@ def checkIntermediatePieces(board, piece, pos):
     pieces = ["r", "b", "l"]
     if board[piece[0]][piece[1]].pieceType in pieces:
         if board[piece[0]][piece[1]].position[0] != pos[0] and board[piece[0]][piece[1]].position[1] != pos[1]:
+            #print(board[piece[0]][piece[1]].position, pos)
             # Diagonal move chosen
-            test_pos = board[piece[0]][piece[1]].position
+            test_pos = [board[piece[0]][piece[1]].position[0], board[piece[0]][piece[1]].position[1]] # This was originally pass by reference and gave me a lot of trouble
             test_pos[0] = 5 - test_pos[0]
             test_pos[1] -= 1
             while test_pos != array_pos:
@@ -49,7 +50,7 @@ def checkIntermediatePieces(board, piece, pos):
                 return True
         elif board[piece[0]][piece[1]].position[0] != pos[0]:
             # Horizontal move chosen
-            test_pos = board[piece[0]][piece[1]].position
+            test_pos = [board[piece[0]][piece[1]].position[0], board[piece[0]][piece[1]].position[1]]
             test_pos[0] = 5 - test_pos[0]
             test_pos[1] -= 1
             while test_pos != array_pos:
@@ -69,7 +70,7 @@ def checkIntermediatePieces(board, piece, pos):
                 return True
         elif board[piece[0]][piece[1]].position[1] != pos[1]:
             # Vertical move chosen
-            test_pos = board[piece[0]][piece[1]].position
+            test_pos = [board[piece[0]][piece[1]].position[0], board[piece[0]][piece[1]].position[1]]
             test_pos[0] = 5 - test_pos[0]
             test_pos[1] -= 1
             while test_pos != array_pos:
@@ -124,6 +125,26 @@ def takeMove(board, piece, pos):
     else:
         return [True, board, None]
 
+# Checks the status of the board to see if a player is in check.
+# Player whose status is checked is opposite owner input
+# (i.e. checkCheck(0, board) will return True if 1 is in check).
+def checkCheck(owner, board):
+    pieces = [] # Array of pieces owned by owner to check move possibilities for
+    type = 0 if len(board) == 9 else 1
+    for y in range(len(board)):
+        for x in range(len(board)):
+            if board[y][x] is not None and board[y][x].owner == owner:
+                pieces.append([y, x])
+    for piece in pieces:
+        moves = board[piece[0]][piece[1]].findPossibleMoves(type)
+        for move in moves:
+            check = checkIntermediatePieces(board, piece, move)
+            if isinstance(check, Piece):
+                if check.pieceType == "k" and check.owner != owner:
+                    return True
+    return False
+
+
 # Prints a text representation of the board to the console.
 # Purely for diagnostic purposes.
 def printBoard(board):
@@ -135,6 +156,27 @@ def printBoard(board):
                 print(piece, end=" ")
         print()
 
+# Check equivalency of two boards.
+# Purely for diagnostic purposes.
+def checkBoards(b1, b2):
+    for y in range(len(b1)):
+        for x in range(len(b1)):
+            if (b1[y][x] == None and b2[y][x] != None) or (b2[y][x] == None and b1[y][x] != None):
+                return False
+            elif b1[y][x] != None and b2[y][x] != None:
+                if b1[y][x].pieceType != b2[y][x].pieceType:
+                    print(y, x)
+                    print(b1[y][x].pieceType, b2[y][x].pieceType)
+                    return False
+                if b1[y][x].owner != b2[y][x].owner:
+                    print(y, x)
+                    print(b1[y][x].owner, b2[y][x].owner)
+                    return False
+                if b1[y][x].position != b2[y][x].position:
+                    print(y, x)
+                    print(b1[y][x].position, b2[y][x].position)
+                    return False
+    return True
 
 def main():
     x = makeBoard(1)

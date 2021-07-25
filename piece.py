@@ -11,6 +11,7 @@ class Piece:
         self.pieceType = type
         self.owner = own
         self.position = pos
+        #self.promoted == False 
 
     def __str__(self):
         return self.pieceType
@@ -53,3 +54,15 @@ class Piece:
                       else False
             }
         return switch[self.pieceType]
+
+    # Returns a list of possible board positions (not array positions)
+    # that this piece can move to, depending on board type (see main.makeBoard()).
+    # Used for checking status of check/mate.
+    def findPossibleMoves(self, type):
+        moves = []
+        top = 10 if type == 0 else 6
+        for x in range(1, top):
+            for y in range(1, 6):
+                if self.checkLegalMove([x, y]):
+                    moves.append([x, y])
+        return moves
