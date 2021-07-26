@@ -144,6 +144,42 @@ def checkCheck(owner, board):
                     return True
     return False
 
+# Checks the status of the board to see if a player is in checkmate.
+# Similar to checkCheck, player whose status is checked is opposite
+# owner input (i.e. checkMate(0, board)) will return True if 1 is
+# in checkmate.
+def checkMate(owner, board):
+    pieces = [] # Array of all pieces owned by !owner to check move possibilities for
+    type = 0 if len(board) == 9 else 1
+    for y in range(len(board)):
+        for x in range(len(board)):
+            if board[y][x] is not None and board[y][x].owner != owner:
+                pieces.append([y, x])
+    all_moves = [] # Array of pieces paired with all their possible moves
+    for piece in pieces:
+        moves = board[piece[0]][piece[1]].findPossibleMoves(type)
+        all_moves.append([piece, moves])
+    for p in all_moves:
+        for move in p[1]:
+            board_buf = copyBoard(board)
+            board_buf = takeMove(board_buf, p[0], move)
+            if board_buf[0] == True:
+                if not checkCheck(owner, board_buf[1]):
+                    return False
+    return True
+
+# Copies board state from b1 into a new returned board.
+def copyBoard(b1):
+    type = 0 if len(b1) == 9 else 1
+    buf = makeBoard(type)
+    for y in range(len(b1)):
+        for x in range(len(b1)):
+            if b1[y][x] is None:
+                buf[y][x] = None
+            else:
+                buf[y][x] = Piece(b1[y][x].pieceType, b1[y][x].owner, b1[y][x].position)
+    return buf
+
 
 # Prints a text representation of the board to the console.
 # Purely for diagnostic purposes.
