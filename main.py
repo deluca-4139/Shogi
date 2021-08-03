@@ -27,7 +27,6 @@ def checkIntermediatePieces(board, piece, pos):
     pieces = ["r", "b", "l"]
     if board[piece[0]][piece[1]].pieceType in pieces:
         if board[piece[0]][piece[1]].position[0] != pos[0] and board[piece[0]][piece[1]].position[1] != pos[1]:
-            #print(board[piece[0]][piece[1]].position, pos)
             # Diagonal move chosen
             test_pos = [board[piece[0]][piece[1]].position[0], board[piece[0]][piece[1]].position[1]] # This was originally pass by reference and gave me a lot of trouble
             test_pos[0] = 5 - test_pos[0]
@@ -115,8 +114,8 @@ def takeMove(board, piece, pos):
     possible = checkIntermediatePieces(board, piece, pos)
     if not possible:
         return [False, 1]
-    # Take move.
-    origPiece = board[piece[0]][piece[1]]
+    # Take move, update piece's interal position.
+    origPiece = Piece(board[piece[0]][piece[1]].pieceType, board[piece[0]][piece[1]].owner, [pos[0], pos[1]])
     board[piece[0]][piece[1]] = None
     board[(pos[1]-1)][(5-pos[0])] = origPiece
     # Check if move would capture piece.
@@ -168,6 +167,44 @@ def checkMate(owner, board):
                     return False
     return True
 
+# Performs a drop of the given piece onto the given board.
+# Performs standard drop checks depending on piece type,
+# returns False if drop is not legal/possible. Returns a
+# new board with successfully dropped piece if possible.
+# Args same as checkIntermediatePieces/takeMove.
+def drop(board, piece, pos):
+    array_pos = [(5-pos[0]), (pos[1]-1)] # Tuple of location in array of desired space to move to.
+    # We don't allow drops on non-empty spaces.
+    if board[array_pos[1]][array_pos[0]] is not None:
+        return False
+    if piece.pieceType == "p":
+        # Pawn not allowed to drop on final row (行き所のない駒)
+        if (pos[1] == 1 and piece.owner == 1) or (pos[1] == len(board) and piece.owner == 0):
+            return False
+        # Pawn not allowed to drop in a file that already has a pawn (二歩)
+        for p in range(len(board)):
+            if board[p][array_pos[0]] is not None:
+                if board[p][array_pos[0]].owner != piece.owner and board[p][array_pos[0]].pieceType == "p":
+                    return False
+        # Pawn not allowed to drop to give immediate checkmate (打ち歩詰め)
+        testMate = copyBoard(board)
+        testMate[array_pos[1]][array_pos[0]] = piece
+        if checkCheck(((piece.owner + 1) % 2), testMate):
+            if checkMate(((piece.owner + 1) % 2), testMate):
+                return False
+    if piece.pieceType == "l":
+        # Lance not allowed to drop on final row (行き所のない駒)
+        if (pos[1] == 1 and piece.owner == 1) or (pos[1] == len(board) and piece.owner == 0):
+            return False
+    if piece.pieceType == "kn":
+        # Knight not allowed to drop on final or penultimate row (行き所のない駒)
+        if (pos[1] <= 2 and piece.owner == 1) or (pos[1] >= (len(board)-1) and piece.owner == 0):
+            return False
+    # If we've gotten through all these checks, we must be allowed to drop.
+    newBoard = copyBoard(board)
+    newBoard[array_pos[1]][array_pos[0]] = Piece(piece.pieceType, ((piece.owner + 1) % 2), [pos[0], pos[1]])
+    return newBoard
+
 # Copies board state from b1 into a new returned board.
 def copyBoard(b1):
     type = 0 if len(b1) == 9 else 1
@@ -180,11 +217,10 @@ def copyBoard(b1):
                 buf[y][x] = Piece(b1[y][x].pieceType, b1[y][x].owner, b1[y][x].position)
     return buf
 
-
 # Prints a text representation of the board to the console.
 # Purely for diagnostic purposes.
 def printBoard(board):
-    for line in x:
+    for line in board:
         for piece in line:
             if piece is None:
                 print("~", end=" ")
